@@ -1,17 +1,1 @@
-<?xml version="1.0" encoding="UTF-8"?>
-
-<bookstore>
-	<book>
-		<title>For Whom the Bell Tolls</title>
-		<author>Hemmingway</author>
-	</book>
-	<book>
-		<title>I, Robot</title>
-		<author>Isaac Asimov</author>
-	</book>
-	<book>
-		<title>Programming Scala</title>
-		<author>Dean Wampler</author>
-		<author>Alex Payne</author>
-	</book>
-</bookstore>
+<bookstore><book><title>For Whom the Bell Tolls</title><author>Hemmingway</author></book><book><title>I, Robot</title><author>Isaac Asimov</author></book><book><title>Programming Scala</title><author>Dean Wampler</author><author>Alex Payne</author></book></bookstore>

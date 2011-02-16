@@ -8,8 +8,12 @@ trait Zipper extends NodeSeq { self =>
   // er...maybe this is a bad method name
   def stripZipper = new NodeSeq(toVector)
   
-  def up = path match {
-    case hd :: tail => hd(this)
+  def up: NSZip = path match {
+    // TODO this is stupid, I'm just trying to avoid a recursive type for now
+    case rebuild :: remainder => new NodeSeq(rebuild(this).toVector) with Zipper {
+      override val path = remainder
+    }
+    
     case Nil => error("Up at top")
   }
   

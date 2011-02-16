@@ -53,14 +53,22 @@ class NodeSeq protected (private val nodes: Vector[Node]) extends IndexedSeq[Nod
   def \(name: String): NodeSeq with Zipper = search(name, Nil)
   
   // TODO optimize
-  protected def search(name: String, path: List[NodeSeq => (NodeSeq with Zipper)]): NodeSeq with Zipper = {
+  protected def search(name: String, pathToSelf: List[NodeSeq => (NodeSeq with Zipper)]): NodeSeq with Zipper = {
     val results = nodes map {
       case e @ Elem(_, _, _, children) => {
-        def rebuild(children2: NodeSeq) = e.copy(children=children2)
+        val selectedWithIndexes = children.zipWithIndex flatMap {
+          case (e @ Elem(_, `name`, _, _), i) => Some(e -> i)
+          case _ => None
+        }
         
-        val selected = children filter {
-          case Elem(_, `name`, _, _) => true
-          case _ => false
+        val indexes = selectedWithIndexes map { case (_, i) => i }
+        val selected = selectedWithIndexes map { case (e, _) => e }
+        
+        def rebuild(children2: NodeSeq) = {
+          val revisedChildren = (indexes zip children2).foldLeft(children) {
+            case (vec, (i, e)) => vec.updated(i, e)
+          }
+          e.copy(children=revisedChildren)
         }
         
         Some((selected, rebuild _))
@@ -98,7 +106,7 @@ class NodeSeq protected (private val nodes: Vector[Node]) extends IndexedSeq[Nod
     }
     
     new NodeSeq(cat) with Zipper {
-      override val path = List(rebuild _)
+      override val path = (rebuild _) :: pathToSelf
     }
   }
   
