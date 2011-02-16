@@ -4,7 +4,7 @@ import scala.collection.IndexedSeqLike
 import scala.collection.generic.CanBuildFrom
 import scala.collection.immutable.{IndexedSeq, Vector, VectorBuilder}
 
-class NodeSeq private (private val nodes: Vector[Node]) extends IndexedSeq[Node] 
+class NodeSeq protected (private val nodes: Vector[Node]) extends IndexedSeq[Node] 
     with IndexedSeqLike[Node, NodeSeq] {
   
   override def newBuilder = NodeSeq.newBuilder
@@ -50,16 +50,55 @@ class NodeSeq private (private val nodes: Vector[Node]) extends IndexedSeq[Node]
   
   def updated(index: Int, node: Node) = new NodeSeq(nodes.updated(index, node))
   
+  def \(name: String): NodeSeq with Zipper = search(name, Nil)
+  
   // TODO optimize
-  def \(name: String): NodeSeq = {
-    this flatMap {
-      case Elem(_, _, _, children) => {
-        children filter {
+  protected def search(name: String, path: List[NodeSeq => (NodeSeq with Zipper)]): NodeSeq with Zipper = {
+    val results = nodes map {
+      case e @ Elem(_, _, _, children) => {
+        def rebuild(children2: NodeSeq) = e.copy(children=children2)
+        
+        val selected = children filter {
           case Elem(_, `name`, _, _) => true
           case _ => false
         }
+        
+        Some((selected, rebuild _))
       }
-      case _ => NodeSeq()
+      
+      case _ => None
+    }
+    
+    val (_, map) = results.foldLeft((0, Vector[(Int, Int, NodeSeq => Node)]())) {
+      case ((i, acc), Some((res, f))) if !res.isEmpty =>
+        (i + res.length, acc :+ (i, i + res.length, f))
+      
+      case ((i, acc), _) => (i, acc)
+    }
+    
+    def rebuild(aggregate: NodeSeq): NodeSeq with Zipper = {
+      val (_, nodes2) = map.foldLeft((0, nodes)) {
+        case ((i, nodes), (start, end, f)) => {
+          val nodes2 = nodes(i) match {
+            case _: Elem =>
+              nodes.updated(i, f(aggregate.slice(start, end)))
+            
+            case _ => nodes
+          }
+          (i + 1, nodes2)
+        }
+      }
+      
+      new NodeSeq(nodes2) with Zipper
+    }
+    
+    val cat = results flatMap {
+      case Some((selected, _)) => selected
+      case None => Vector()
+    }
+    
+    new NodeSeq(cat) with Zipper {
+      override val path = List(rebuild _)
     }
   }
   
@@ -70,8 +109,10 @@ class NodeSeq private (private val nodes: Vector[Node]) extends IndexedSeq[Node]
       case _ => Nil
     }
     
-    (this \ name) ++ recursive
+    (this \ name stripZipper) ++ recursive
   }
+  
+  def toVector = nodes
   
   override def toString = nodes.mkString
 }
