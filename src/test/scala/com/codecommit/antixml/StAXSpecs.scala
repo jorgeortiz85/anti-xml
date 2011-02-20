@@ -60,8 +60,8 @@ object StAXSpecs extends Specification {
     //}
     }
   "StAXParser" should {
-    "parse should generate NodeSeqs" in {
-      StAXParser.parse(StAXIterator.fromString("<a:a xmlns:a='a'>hi<b attr='value' /></a:a>")) mustEqual NodeSeq(Elem(Some("a"), "a", Map.empty, NodeSeq(Text("hi"), Elem(None, "b", Map("attr" -> "value"), NodeSeq()))))
+    "parse should generate Elems" in {
+      StAXParser.parse(StAXIterator.fromString("<a:a xmlns:a='a'>hi<b attr='value' /></a:a>")) mustEqual Elem(Some("a"), "a", Map.empty, NodeSeq(Text("hi"), Elem(None, "b", Map("attr" -> "value"), NodeSeq())))
     }
   }
 }

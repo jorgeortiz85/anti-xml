@@ -46,7 +46,7 @@ private[antixml] class NodeSeqSAXHandler extends DefaultHandler {
     builders.head += result
   }
   
-  def result = pop().asInstanceOf[Group[Elem]]       // nasty, but it shouldn't be a problem
+  def result = pop().asInstanceOf[Group[Elem]].head       // nasty, but it shouldn't be a problem
   
   private def pop() = {
     val (back :: builders2) = builders
